@@ -24,4 +24,4 @@ npm run pack
 
 
 ## Download
-Mac: [app release](https://github.com/PanJiaChen/kill-by-port/releases/tag/v3.0.0)
+Win: [app release](https://github.com/eryuanzhige/killByPort/releases/tag/3.0.1)
