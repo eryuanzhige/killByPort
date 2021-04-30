@@ -19,8 +19,9 @@ function createWindow() {
    */
   mainWindow = new BrowserWindow({
     height: 563,
-    useContentSize: true,
-    width: 1000
+    useContentSize: false,
+    width: 800,
+    resizable: false // 禁止改变主窗口尺寸
   })
 
   mainWindow.loadURL(winURL)
@@ -63,3 +64,22 @@ app.on('ready', () => {
   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
  */
+// 更改菜单栏
+// const { Menu } = require('electron')
+//
+// // 设置菜单
+// const dockMenu = Menu.buildFromTemplate([
+//   {
+//     label: '文件', click: function() {
+//       console.log('点击事件')
+//     }
+//   },
+//   {
+//     label: '编辑', submenu: [
+//       { label: '保存' },
+//       { label: '另存' }
+//     ]
+//   },
+//   { label: '帮助' }
+// ])
+// Menu.setApplicationMenu(dockMenu)
