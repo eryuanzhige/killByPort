@@ -1,11 +1,13 @@
 <template>
   <div class="dashboard-container">
     <el-row>
-      <el-input style="width: 300px;" v-model="port" placeholder="请输入端口号" @keyup.enter.native="queryPort"></el-input>
-      <el-button type="primary" @click="queryPort">查询</el-button>
+      <el-input style="width: 300px;" size="mini" v-model="port" clearable placeholder="请输入端口号"
+                @keyup.enter.native="queryPort"></el-input>
+      <el-button type="primary" size="mini" @click="queryPort">查询</el-button>
     </el-row>
     <el-row class="list-wrap">
-      <el-row v-for="(item,index) of ports" :key="item[1]+index" class="item">
+      <el-row v-for="(item,index) of ports" :key="item[1]+index" class="item"
+              @click.native="queryProgressInfo(item[4])">
         <el-col :span="4" class="i-col col-0">{{ item[0] }}(<span class="port">{{ item[5] }}</span>)</el-col>
         <el-col :span="5" class="i-col col-1">{{ item[1] }}</el-col>
         <el-col :span="6" class="i-col col-2">{{ item[2] }}</el-col>
@@ -16,6 +18,21 @@
         </el-col>
       </el-row>
     </el-row>
+    <el-dialog
+        title="占用进程明细"
+        :visible.sync="dialogVisible"
+        :show-close="false"
+        width="60%">
+      <div class="prog-list">
+        <el-row v-for="(item,index) of progress" :key="item[1]+index" class="item">
+          <el-col :span="16" class="i-col col-0">{{ item[0] }}</el-col>
+          <el-col :span="8" class="i-col col-1">{{ item[4] }} {{ item[5] }}</el-col>
+        </el-row>
+      </div>
+      <span slot="footer" class="dialog-footer">
+            <el-button size="mini" type="danger" @click="killProgress(selPid)">关闭进程</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -26,7 +43,10 @@ export default {
   data() {
     return {
       port: '',
-      ports: []// "TCP" "0.0.0.0:135" "0.0.0.0:0" "LISTENING" "1328"
+      dialogVisible: false,
+      ports: [], // "TCP" "0.0.0.0:135" "0.0.0.0:0" "LISTENING" "1328"
+      progress: [],
+      selPid: ''
     }
   },
   created() {
@@ -99,6 +119,40 @@ export default {
         this.showNotification('成功', '关闭进程成功', 'success')
         this.port = ''
         this.queryPort()
+        this.dialogVisible = false
+      })
+    },
+    queryProgressInfo(pid) {
+      this.selPid = pid
+      const cmdStr = 'tasklist|findstr ' + pid
+      const workerProcess = exec(cmdStr, {})
+
+      // 打印正常的后台可执行程序输出
+      workerProcess.stdout.on('data', (data) => {
+        console.log('success: ' + data)
+        const dataArr = data.split('\n')
+        const filterArr = []
+        dataArr.forEach(it => {
+          const item = it.trim().split(/\s+/)
+          if (item.length === 6) {
+            filterArr.push(item)
+          }
+        })
+        this.progress = filterArr.slice(0, 5)
+        if (dataArr.length === 0) {
+          return
+        }
+        this.dialogVisible = true
+      })
+
+      // 打印错误的后台可执行程序输出
+      workerProcess.stderr.on('data', (data) => {
+        console.log('stderr: ' + data)
+      })
+
+      // 退出之后的输出
+      workerProcess.on('close', (code) => {
+        console.log('out code：' + code)
       })
     },
     showNotification(title = '通知', message = '', type = 'info') {
@@ -121,7 +175,8 @@ export default {
     .list-wrap {
       height: calc(100vh - 80px);
       overflow: auto;
-      padding: 20px 0;
+      padding: 0;
+      margin-top: 20px;
 
       .item {
         padding-top: 10px;
@@ -163,6 +218,18 @@ export default {
           }
         }
       }
+    }
+  }
+}
+
+.prog-list {
+  .item {
+    .col-0 {
+      color: #0376c2;
+    }
+
+    .col-1 {
+      color: #7F00FF;
     }
   }
 }
